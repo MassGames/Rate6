@@ -66,22 +66,7 @@
     filter: drop-shadow(0 0 10px rgba(255, 46, 147, .55));
   }
 
-  /* Pastille de statut */
-  .pill {
-    display: inline-flex; align-items: center; gap: .4rem;
-    font-size: .625rem; font-weight: 700; letter-spacing: .14em;
-    padding: .25rem .55rem; border-radius: 999px;
-    border: 1px solid var(--line); color: var(--muted);
-  }
-  .pill .dot { width: .45rem; height: .45rem; border-radius: 999px; background: currentColor; }
-  .pill[data-kind="live"] { color: var(--cyan); border-color: rgba(0, 240, 255, .4); background: rgba(0, 240, 255, .07); }
-  .pill[data-kind="live"] .dot { animation: pulse 1.6s ease-in-out infinite; box-shadow: 0 0 8px var(--cyan); }
-  .pill[data-kind="demo"] { color: var(--pink); border-color: rgba(255, 46, 147, .4); background: rgba(255, 46, 147, .07); }
-  .pill[data-kind="connecting"] { color: #FFC857; border-color: rgba(255, 200, 87, .4); }
-  .pill[data-kind="offline"] { color: #FF5C5C; border-color: rgba(255, 92, 92, .4); }
-  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(.7); } }
-
-  /* Bouton langue & Interrupteur anti-spoiler */
+  /* Sélecteur langue & Interrupteur anti-spoiler */
   .btn-nav, .switch {
     display: inline-flex; align-items: center; gap: .5rem; cursor: pointer; user-select: none;
     padding: .45rem .75rem; border-radius: .75rem; border: 1px solid var(--line); background: var(--card);
@@ -99,6 +84,8 @@
     height: 2.5rem; font-size: .875rem; transition: border-color .15s, box-shadow .15s; }
   .field:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(0, 240, 255, .15); }
   select.field { color-scheme: dark; padding: 0 2rem 0 .75rem; appearance: none; -webkit-appearance: none; cursor: pointer; }
+  select.lang-select { color-scheme: dark; appearance: none; -webkit-appearance: none; cursor: pointer; }
+  select.lang-select:focus { outline: none; border-color: var(--cyan); }
 
   /* Cartes */
   .card {
@@ -186,19 +173,31 @@
 <header class="sticky top-0 z-40 backdrop-blur-xl bg-ink/75 border-b border-line">
   <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center gap-x-2.5 gap-y-3">
 
-    <!-- Logo + statut -->
+    <!-- Logo -->
     <div class="order-1 flex items-center gap-3">
       <a href="#" class="flex items-center min-w-0 shrink" aria-label="Rate6">
         <img src="logo.png" alt="Rate6" class="h-6 xs:h-7 sm:h-9 w-auto max-w-[140px] sm:max-w-[210px] object-contain">
       </a>
     </div>
 
-    <!-- Contrôles droite : Langue + Anti-spoiler -->
+    <!-- Contrôles droite : Langue (9 langues) + Anti-spoiler -->
     <div class="order-2 ml-auto flex items-center gap-2 md:order-4">
-      <button id="langToggle" type="button" class="btn-nav text-muted hover:text-white" aria-label="Changer la langue / Switch language">
-        <i data-lucide="globe" class="w-4 h-4 text-neon-cyan"></i>
-        <span id="langLabel" class="font-display font-bold text-xs tracking-wider text-[#ECECF3]">FR</span>
-      </button>
+      <div class="relative flex items-center">
+        <i data-lucide="globe" class="w-4 h-4 text-neon-cyan absolute left-2.5 pointer-events-none"></i>
+        <select id="langSelect" aria-label="Language"
+                class="lang-select btn-nav pl-8 pr-6 text-xs font-display font-bold tracking-wider text-[#ECECF3]">
+          <option value="fr" class="bg-[#13131A] text-white">FR</option>
+          <option value="en" class="bg-[#13131A] text-white">EN</option>
+          <option value="es" class="bg-[#13131A] text-white">ES</option>
+          <option value="pt" class="bg-[#13131A] text-white">PT</option>
+          <option value="de" class="bg-[#13131A] text-white">DE</option>
+          <option value="ru" class="bg-[#13131A] text-white">RU</option>
+          <option value="zh" class="bg-[#13131A] text-white">中文</option>
+          <option value="ja" class="bg-[#13131A] text-white">日本語</option>
+          <option value="ko" class="bg-[#13131A] text-white">한국어</option>
+        </select>
+        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-muted absolute right-2 pointer-events-none"></i>
+      </div>
 
       <button id="spoilerToggle" type="button" role="switch" aria-checked="true" class="switch">
         <span class="track"><span class="thumb"></span></span>
@@ -236,7 +235,27 @@
 
   <div id="list" aria-live="polite"></div>
 
-  <footer id="footerText" class="mt-12 pt-6 border-t border-line text-xs text-muted leading-relaxed"></footer>
+  <footer class="mt-12 pt-6 border-t border-line flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs text-muted leading-relaxed">
+    <p id="footerText" class="max-w-3xl"></p>
+
+    <div class="flex items-center gap-3 shrink-0">
+      <!-- Discord -->
+      <a href="https://discord.gg/D7mfQ2NnJE" target="_blank" rel="noopener noreferrer" aria-label="Discord" title="Discord"
+         class="w-10 h-10 grid place-items-center rounded-xl bg-panel border border-line text-[#ECECF3]/80 hover:text-white hover:border-[#5865F2] hover:bg-[#5865F2]/15 transition">
+        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+        </svg>
+      </a>
+
+      <!-- YouTube -->
+      <a href="https://www.youtube.com/@masslevrai" target="_blank" rel="noopener noreferrer" aria-label="YouTube" title="YouTube"
+         class="w-10 h-10 grid place-items-center rounded-xl bg-panel border border-line text-[#ECECF3]/80 hover:text-white hover:border-[#FF0000] hover:bg-[#FF0000]/15 transition">
+        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+        </svg>
+      </a>
+    </div>
+  </footer>
 </main>
 
 <!-- Modale mission -->
@@ -254,16 +273,29 @@
 /* ==========================================================================
    CONFIGURATION SUPABASE
    ========================================================================== */
-const SUPABASE_URL = 'https://duzhhlvjkrymipxxzxfh.supabase.co/';       // ex. 'https://xxxxxxxx.supabase.co'
-const SUPABASE_ANON_KEY = 'sb_publishable_S-e6gBLAArscMfN9C2p21g_WysYk9p7';  // clé "anon public"
+const SUPABASE_URL = 'https://duzhhlvjkrymipxxzxfh.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_S-e6gBLAArscMfN9C2p21g_WysYk9p7';
 
 /* ==========================================================================
-   TRADUCTIONS INTERFACE (FR / EN)
+   TRADUCTIONS INTERFACE (9 LANGUES)
    ========================================================================== */
+const SUPPORTED_LANGS = ['fr', 'en', 'es', 'pt', 'de', 'ru', 'zh', 'ja', 'ko'];
+
+const LOCALES = {
+  fr: 'fr-FR',
+  en: 'en-US',
+  es: 'es-ES',
+  pt: 'pt-BR',
+  de: 'de-DE',
+  ru: 'ru-RU',
+  zh: 'zh-CN',
+  ja: 'ja-JP',
+  ko: 'ko-KR'
+};
+
 const I18N = {
   fr: {
     pageTitle: 'Rate6 — Notez les missions de GTA VI',
-    status: { live: 'LIVE', demo: 'DÉMO', connecting: 'CONNEXION…', offline: 'HORS LIGNE' },
     spoilerBtn: 'Anti-spoiler',
     spoilerTitle: 'Floute les titres et descriptions des missions non notées',
     searchPlaceholder: 'Rechercher une mission…  ( / )',
@@ -300,7 +332,6 @@ const I18N = {
   },
   en: {
     pageTitle: 'Rate6 — Rate every GTA VI mission',
-    status: { live: 'LIVE', demo: 'DEMO', connecting: 'CONNECTING…', offline: 'OFFLINE' },
     spoilerBtn: 'Anti-spoiler',
     spoilerTitle: 'Blur titles and descriptions of unrated missions',
     searchPlaceholder: 'Search a mission…  ( / )',
@@ -334,6 +365,258 @@ const I18N = {
     toastSpoilerOff: 'Anti-spoiler disabled',
     toastLang: 'Language: English',
     footer: 'Rate6 is an independent fan project, not affiliated with Rockstar Games or Take-Two Interactive. One vote per mission and per visitor, no account required.'
+  },
+  es: {
+    pageTitle: 'Rate6 — Califica las misiones de GTA VI',
+    spoilerBtn: 'Antispoiler',
+    spoilerTitle: 'Difumina los títulos y descripciones de las misiones sin calificar',
+    searchPlaceholder: 'Buscar una misión…  ( / )',
+    allChapters: 'Todos los capítulos',
+    chapterWord: 'Capítulo',
+    chapterUpper: 'CAPÍTULO',
+    noWord: 'N.º',
+    demoBanner: '<strong class="text-neon-pink">Modo demo.</strong> Los votos se guardan localmente en tu navegador. Añade <code class="px-1 rounded bg-white/10">SUPABASE_URL</code> y <code class="px-1 rounded bg-white/10">SUPABASE_ANON_KEY</code> en el script para pasar a en vivo.',
+    heroTitle: 'Califica cada misión. <span class="logo-six">Mira la media en vivo.</span>',
+    summary: (m, v, mine) => `${m} misiones · ${v} en total · calificaste ${mine}/${m}`,
+    votes: (n) => `${n.toLocaleString('es-ES')} voto${n !== 1 ? 's' : ''}`,
+    spoilerCard: 'Spoilers ocultos · haz clic para revelar',
+    yourRating: 'Tu nota',
+    notRated: 'Sin calificar',
+    noResultsTitle: 'No se encontraron misiones',
+    noResultsSub: 'Prueba con otra palabra clave o cambia de capítulo.',
+    playableChar: 'Personaje jugable',
+    community: 'Comunidad',
+    clickToEdit: 'Clic para editar',
+    editRating: 'Editar mi nota',
+    giveRating: 'Dar mi nota',
+    raterPrompt: 'Haz clic en las estrellas para calificar',
+    raterHint: 'Pasa el cursor o toca la mitad izquierda/derecha de una estrella para medias notas.',
+    words: ['Mala', 'Decepcionante', 'Aceptable', 'Muy buena', 'Excelente', 'Obra maestra'],
+    toastUnchanged: 'Nota sin cambios',
+    toastOffline: 'Sin conexión: no se puede votar',
+    toastUpdated: 'Nota actualizada',
+    toastVoted: '¡Gracias por tu voto!',
+    toastError: 'Error: voto no guardado',
+    toastSpoilerOn: 'Antispoiler activado',
+    toastSpoilerOff: 'Antispoiler desactivado',
+    toastLang: 'Idioma: Español',
+    footer: 'Rate6 es un proyecto independiente de fans, no afiliado a Rockstar Games ni a Take-Two Interactive. Un voto por misión y por visitante, sin necesidad de cuenta.'
+  },
+  pt: {
+    pageTitle: 'Rate6 — Avalie as missões de GTA VI',
+    spoilerBtn: 'Anti-spoiler',
+    spoilerTitle: 'Desfoca títulos e descrições de missões não avaliadas',
+    searchPlaceholder: 'Pesquisar uma missão…  ( / )',
+    allChapters: 'Todos os capítulos',
+    chapterWord: 'Capítulo',
+    chapterUpper: 'CAPÍTULO',
+    noWord: 'Nº',
+    demoBanner: '<strong class="text-neon-pink">Modo demo.</strong> Os votos são salvos localmente no seu navegador. Preencha <code class="px-1 rounded bg-white/10">SUPABASE_URL</code> e <code class="px-1 rounded bg-white/10">SUPABASE_ANON_KEY</code> no script para ativar ao vivo.',
+    heroTitle: 'Avalie cada missão. <span class="logo-six">Veja a média ao vivo.</span>',
+    summary: (m, v, mine) => `${m} missões · ${v} no total · você avaliou ${mine}/${m}`,
+    votes: (n) => `${n.toLocaleString('pt-BR')} voto${n !== 1 ? 's' : ''}`,
+    spoilerCard: 'Spoilers ocultos · clique para revelar',
+    yourRating: 'Sua nota',
+    notRated: 'Ainda não avaliada',
+    noResultsTitle: 'Nenhuma missão encontrada',
+    noResultsSub: 'Tente outra palavra-chave ou mude de capítulo.',
+    playableChar: 'Personagem jogável',
+    community: 'Comunidade',
+    clickToEdit: 'Clique para editar',
+    editRating: 'Editar minha nota',
+    giveRating: 'Dar minha nota',
+    raterPrompt: 'Clique nas estrelas para avaliar',
+    raterHint: 'Passe o cursor ou toque na metade esquerda/direita de uma estrela para meia nota.',
+    words: ['Péssima', 'Decepcionante', 'Razoável', 'Muito boa', 'Excelente', 'Obra-prima'],
+    toastUnchanged: 'Nota inalterada',
+    toastOffline: 'Offline: não foi possível votar',
+    toastUpdated: 'Nota atualizada',
+    toastVoted: 'Obrigado pelo seu voto!',
+    toastError: 'Erro: voto não salvo',
+    toastSpoilerOn: 'Anti-spoiler ativado',
+    toastSpoilerOff: 'Anti-spoiler desativado',
+    toastLang: 'Idioma: Português',
+    footer: 'Rate6 é um projeto independente de fãs, não afiliado à Rockstar Games nem à Take-Two Interactive. Um voto por missão e por visitante, sem necessidade de conta.'
+  },
+  de: {
+    pageTitle: 'Rate6 — Bewerte alle GTA VI-Missionen',
+    spoilerBtn: 'Anti-Spoiler',
+    spoilerTitle: 'Macht Titel und Beschreibungen unbewerteter Missionen unkenntlich',
+    searchPlaceholder: 'Mission suchen…  ( / )',
+    allChapters: 'Alle Kapitel',
+    chapterWord: 'Kapitel',
+    chapterUpper: 'KAPITEL',
+    noWord: 'Nr.',
+    demoBanner: '<strong class="text-neon-pink">Demo-Modus.</strong> Stimmen werden lokal im Browser gespeichert. Trage <code class="px-1 rounded bg-white/10">SUPABASE_URL</code> und <code class="px-1 rounded bg-white/10">SUPABASE_ANON_KEY</code> oben im Skript ein.',
+    heroTitle: 'Bewerte jede Mission. <span class="logo-six">Sieh den Schnitt live.</span>',
+    summary: (m, v, mine) => `${m} Missionen · ${v} gesamt · du hast ${mine}/${m} bewertet`,
+    votes: (n) => `${n.toLocaleString('de-DE')} Stimme${n !== 1 ? 'n' : ''}`,
+    spoilerCard: 'Spoiler ausgeblendet · klicken zum Anzeigen',
+    yourRating: 'Deine Bewertung',
+    notRated: 'Noch nicht bewertet',
+    noResultsTitle: 'Keine Missionen gefunden',
+    noResultsSub: 'Versuche ein anderes Stichwort oder wechsle das Kapitel.',
+    playableChar: 'Spielbarer Charakter',
+    community: 'Community',
+    clickToEdit: 'Klicken zum Bearbeiten',
+    editRating: 'Bewertung ändern',
+    giveRating: 'Bewertung abgeben',
+    raterPrompt: 'Klicke zum Bewerten auf die Sterne',
+    raterHint: 'Bewege den Zeiger oder tippe auf die linke/rechte Hälfte eines Sterns für halbe Sterne.',
+    words: ['Mangelhaft', 'Enttäuschend', 'Okay', 'Sehr gut', 'Hervorragend', 'Meisterwerk'],
+    toastUnchanged: 'Bewertung unverändert',
+    toastOffline: 'Offline: Bewertung nicht möglich',
+    toastUpdated: 'Bewertung aktualisiert',
+    toastVoted: 'Danke für deine Stimme!',
+    toastError: 'Fehler: Stimme nicht gespeichert',
+    toastSpoilerOn: 'Anti-Spoiler aktiviert',
+    toastSpoilerOff: 'Anti-Spoiler deaktiviert',
+    toastLang: 'Sprache: Deutsch',
+    footer: 'Rate6 ist ein unabhängiges Fanprojekt und steht in keiner Verbindung zu Rockstar Games oder Take-Two Interactive. Eine Stimme pro Mission und Besucher, kein Konto erforderlich.'
+  },
+  ru: {
+    pageTitle: 'Rate6 — Оцените все миссии GTA VI',
+    spoilerBtn: 'Антиспойлер',
+    spoilerTitle: 'Размывает названия и описания неоценённых миссий',
+    searchPlaceholder: 'Поиск миссии…  ( / )',
+    allChapters: 'Все главы',
+    chapterWord: 'Глава',
+    chapterUpper: 'ГЛАВА',
+    noWord: '№',
+    demoBanner: '<strong class="text-neon-pink">Демо-режим.</strong> Голоса сохраняются локально в браузере. Укажите <code class="px-1 rounded bg-white/10">SUPABASE_URL</code> и <code class="px-1 rounded bg-white/10">SUPABASE_ANON_KEY</code> в начале скрипта.',
+    heroTitle: 'Оцени каждую миссию. <span class="logo-six">Следи за рейтингом в реальном времени.</span>',
+    summary: (m, v, mine) => `${m} миссий · ${v} всего · вы оценили ${mine}/${m}`,
+    votes: (n) => `${n.toLocaleString('ru-RU')} голос(ов)`,
+    spoilerCard: 'Спойлеры скрыты · нажмите, чтобы открыть',
+    yourRating: 'Ваша оценка',
+    notRated: 'Ещё не оценено',
+    noResultsTitle: 'Миссии не найдены',
+    noResultsSub: 'Попробуйте другое ключевое слово или выберите другую главу.',
+    playableChar: 'Игровой персонаж',
+    community: 'Сообщество',
+    clickToEdit: 'Нажмите, чтобы изменить',
+    editRating: 'Изменить оценку',
+    giveRating: 'Поставить оценку',
+    raterPrompt: 'Нажмите на звёзды для оценки',
+    raterHint: 'Наведите курсор или нажмите на левую/правую половину звезды для половинчатой оценки.',
+    words: ['Провал', 'Разочарование', 'Неплохо', 'Очень хорошо', 'Отлично', 'Шедевр'],
+    toastUnchanged: 'Оценка не изменилась',
+    toastOffline: 'Нет сети: невозможно проголосовать',
+    toastUpdated: 'Оценка обновлена',
+    toastVoted: 'Спасибо за ваш голос!',
+    toastError: 'Ошибка: голос не сохранён',
+    toastSpoilerOn: 'Антиспойлер включён',
+    toastSpoilerOff: 'Антиспойлер выключен',
+    toastLang: 'Язык: Русский',
+    footer: 'Rate6 — независимый фанатский проект, не связанный с Rockstar Games или Take-Two Interactive. Один голос за миссию от посетителя, регистрация не требуется.'
+  },
+  zh: {
+    pageTitle: 'Rate6 — 为《GTA VI》任务评分',
+    spoilerBtn: '防剧透',
+    spoilerTitle: '模糊未评分任务的标题和简介',
+    searchPlaceholder: '搜索任务…  ( / )',
+    allChapters: '所有章节',
+    chapterWord: '第',
+    chapterUpper: '章节',
+    noWord: '#',
+    demoBanner: '<strong class="text-neon-pink">演示模式。</strong> 投票保存在本地浏览器中。请在脚本顶部填写 <code class="px-1 rounded bg-white/10">SUPABASE_URL</code> 和 <code class="px-1 rounded bg-white/10">SUPABASE_ANON_KEY</code> 以启用实时同步。',
+    heroTitle: '为每个任务评分。<span class="logo-six">实时查看社区均分。</span>',
+    summary: (m, v, mine) => `共 ${m} 个任务 · 累计 ${v} · 你已评分 ${mine}/${m}`,
+    votes: (n) => `${n.toLocaleString('zh-CN')} 票`,
+    spoilerCard: '已隐藏剧透 · 点击查看',
+    yourRating: '你的评分',
+    notRated: '尚未评分',
+    noResultsTitle: '未找到相关任务',
+    noResultsSub: '尝试其他关键词或切换章节。',
+    playableChar: '可操控角色',
+    community: '社区评分',
+    clickToEdit: '点击修改',
+    editRating: '修改我的评分',
+    giveRating: '给出我的评分',
+    raterPrompt: '点击星星进行评分',
+    raterHint: '悬停或点击星星的左/右半部分可给出半星评分。',
+    words: ['糟糕', '令人失望', '一般', '很棒', '极佳', '神作'],
+    toastUnchanged: '评分未更改',
+    toastOffline: '离线状态：无法投票',
+    toastUpdated: '评分已更新',
+    toastVoted: '感谢你的投票！',
+    toastError: '错误：投票未保存',
+    toastSpoilerOn: '防剧透已开启',
+    toastSpoilerOff: '防剧透已关闭',
+    toastLang: '语言：简体中文',
+    footer: 'Rate6 是一个独立的粉丝项目，与 Rockstar Games 或 Take-Two Interactive 无关。每位访客每个任务限投一票，无需注册账号。'
+  },
+  ja: {
+    pageTitle: 'Rate6 — GTA VI 全ミッション評価',
+    spoilerBtn: 'ネタバレ防止',
+    spoilerTitle: '未評価ミッションのタイトルと概要にぼかしを入れます',
+    searchPlaceholder: 'ミッションを検索…  ( / )',
+    allChapters: 'すべてのチャプター',
+    chapterWord: 'チャプター',
+    chapterUpper: 'CHAPTER',
+    noWord: 'No.',
+    demoBanner: '<strong class="text-neon-pink">デモモード。</strong> 投票はブラウザにローカル保存されます。ライブ同期を有効にするにはスクリプト上部の <code class="px-1 rounded bg-white/10">SUPABASE_URL</code> と <code class="px-1 rounded bg-white/10">SUPABASE_ANON_KEY</code> を設定してください。',
+    heroTitle: '全ミッションを評価しよう。<span class="logo-six">平均スコアをリアルタイム表示。</span>',
+    summary: (m, v, mine) => `全 ${m} ミッション · 合計 ${v} · あなたの評価 ${mine}/${m}`,
+    votes: (n) => `${n.toLocaleString('ja-JP')} 票`,
+    spoilerCard: 'ネタバレ非表示 · クリックして表示',
+    yourRating: 'あなたの評価',
+    notRated: '未評価',
+    noResultsTitle: 'ミッションが見つかりません',
+    noResultsSub: '別のキーワードを試すかチャプターを変更してください。',
+    playableChar: '操作キャラクター',
+    community: 'コミュニティ評価',
+    clickToEdit: 'クリックして変更',
+    editRating: '評価を変更する',
+    giveRating: 'このミッションを評価',
+    raterPrompt: '星をクリックして評価',
+    raterHint: '星の左半分・右半分にカーソルを合わせるかタップすると0.5単位で評価できます。',
+    words: ['イマイチ', '期待外れ', '普通', '良い', '最高', '神ミッション'],
+    toastUnchanged: '評価は変更されていません',
+    toastOffline: 'オフライン：投票できません',
+    toastUpdated: '評価を更新しました',
+    toastVoted: '投票ありがとうございます！',
+    toastError: 'エラー：投票を保存できませんでした',
+    toastSpoilerOn: 'ネタバレ防止を有効にしました',
+    toastSpoilerOff: 'ネタバレ防止を解除しました',
+    toastLang: '言語：日本語',
+    footer: 'Rate6は非公式のファンプロジェクトであり、Rockstar GamesおよびTake-Two Interactiveとは一切関係ありません。アカウント不要で1ミッションにつき1人1票投票できます。'
+  },
+  ko: {
+    pageTitle: 'Rate6 — GTA VI 모든 임무 평가',
+    spoilerBtn: '스포일러 방지',
+    spoilerTitle: '아직 평가하지 않은 임무의 제목과 설명을 흐리게 표시합니다',
+    searchPlaceholder: '임무 검색…  ( / )',
+    allChapters: '모든 챕터',
+    chapterWord: '챕터',
+    chapterUpper: 'CHAPTER',
+    noWord: '#',
+    demoBanner: '<strong class="text-neon-pink">데모 모드.</strong> 투표는 브라우저에 로컬로 저장됩니다. 실시간 연동을 위해 스크립트 상단의 <code class="px-1 rounded bg-white/10">SUPABASE_URL</code>과 <code class="px-1 rounded bg-white/10">SUPABASE_ANON_KEY</code>를 입력하세요.',
+    heroTitle: '모든 임무를 평가하세요. <span class="logo-six">실시간 평균 평점을 확인하세요.</span>',
+    summary: (m, v, mine) => `총 ${m}개 임무 · 누적 ${v} · 내 평가 ${mine}/${m}`,
+    votes: (n) => `${n.toLocaleString('ko-KR')}표`,
+    spoilerCard: '스포일러 숨김 · 클릭하여 보기',
+    yourRating: '내 평점',
+    notRated: '아직 평가 안 됨',
+    noResultsTitle: '임무를 찾을 수 없습니다',
+    noResultsSub: '다른 검색어를 입력하거나 챕터를 변경해 보세요.',
+    playableChar: '플레이어블 캐릭터',
+    community: '커뮤니티 평점',
+    clickToEdit: '클릭하여 수정',
+    editRating: '내 평점 수정',
+    giveRating: '내 평점 남기기',
+    raterPrompt: '별을 클릭하여 평가하세요',
+    raterHint: '별의 왼쪽/오른쪽 절반을 가리키거나 탭하면 0.5점 단위로 평가할 수 있습니다.',
+    words: ['최악', '아쉬움', '무난함', '좋음', '훌륭함', '명작'],
+    toastUnchanged: '평점이 변경되지 않았습니다',
+    toastOffline: '오프라인: 투표할 수 없습니다',
+    toastUpdated: '평점이 수정되었습니다',
+    toastVoted: '투표해 주셔서 감사합니다!',
+    toastError: '오류: 투표가 저장되지 않았습니다',
+    toastSpoilerOn: '스포일러 방지 켜짐',
+    toastSpoilerOff: '스포일러 방지 꺼짐',
+    toastLang: '언어: 한국어',
+    footer: 'Rate6는 독립적인 팬 프로젝트이며 Rockstar Games 또는 Take-Two Interactive와 관련이 없습니다. 계정 없이 방문자당 임무별 1회 투표할 수 있습니다.'
   }
 };
 
@@ -496,13 +779,24 @@ const byId = Object.fromEntries(MISSIONS.map((m) => [m.id, m]));
 let visitorId = store.get(K_VISITOR);
 if (!visitorId) { visitorId = genId(); store.set(K_VISITOR, visitorId); }
 
-const savedLang = store.get(K_LANG);
-const defaultLang = savedLang === 'en' || savedLang === 'fr'
-  ? savedLang
-  : (navigator.language && navigator.language.toLowerCase().startsWith('fr') ? 'fr' : 'en');
+function detectUserLang() {
+  const saved = store.get(K_LANG);
+  if (saved && SUPPORTED_LANGS.includes(saved)) return saved;
+
+  const browserLangs = Array.isArray(navigator.languages) && navigator.languages.length
+    ? navigator.languages
+    : [navigator.language || 'en'];
+
+  for (const raw of browserLangs) {
+    if (!raw) continue;
+    const code = String(raw).toLowerCase().split('-')[0];
+    if (SUPPORTED_LANGS.includes(code)) return code;
+  }
+  return 'en';
+}
 
 const state = {
-  lang: defaultLang,
+  lang: detectUserLang(),
   statusKind: 'connecting',
   query: '',
   chapter: 'all',
@@ -512,8 +806,8 @@ const state = {
   lastFocusId: null
 };
 
-const t = () => I18N[state.lang];
-const fmt1 = (n) => Number(n).toLocaleString(state.lang === 'fr' ? 'fr-FR' : 'en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const t = () => I18N[state.lang] || I18N.en;
+const fmt1 = (n) => Number(n).toLocaleString(LOCALES[state.lang] || 'en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const votesLabel = (n) => t().votes(n);
 
 function ratingWord(v) {
@@ -569,7 +863,8 @@ function applyLanguageUI() {
   const L = t();
   document.documentElement.lang = state.lang;
   document.title = L.pageTitle;
-  $('#langLabel').textContent = state.lang.toUpperCase();
+  const langSelect = $('#langSelect');
+  if (langSelect) langSelect.value = state.lang;
   $('#spoilerLabel').textContent = L.spoilerBtn;
   $('#spoilerToggle').title = L.spoilerTitle;
   $('#search').placeholder = L.searchPlaceholder;
@@ -587,7 +882,12 @@ function buildChapterSelect() {
   const chapters = [...new Set(MISSIONS.map((m) => m.chapter))].sort((a, b) => a - b);
   $('#chapterFilter').innerHTML =
     `<option value="all">${esc(t().allChapters)}</option>` +
-    chapters.map((c) => `<option value="${c}">${esc(t().chapterWord)} ${c} — ${esc(CHAPTERS[c] || '')}</option>`).join('');
+    chapters.map((c) => {
+      const label = state.lang === 'zh'
+        ? `第 ${c} 章 — ${CHAPTERS[c] || ''}`
+        : `${t().chapterWord} ${c} — ${CHAPTERS[c] || ''}`;
+      return `<option value="${c}">${esc(label)}</option>`;
+    }).join('');
   $('#chapterFilter').value = prev;
 }
 
@@ -672,17 +972,20 @@ function renderList() {
       </div>`;
   } else {
     const chapters = [...new Set(list.map((m) => m.chapter))].sort((a, b) => a - b);
-    root.innerHTML = chapters.map((ch) => `
+    root.innerHTML = chapters.map((ch) => {
+      const chBadge = state.lang === 'zh' ? `第 ${ch} 章` : `${L.chapterUpper} ${ch}`;
+      return `
       <section class="mb-10">
         <div class="flex items-baseline gap-3 mb-4">
-          <span class="font-display font-bold text-xs tracking-[.22em] text-neon-pink">${esc(L.chapterUpper)} ${ch}</span>
+          <span class="font-display font-bold text-xs tracking-[.22em] text-neon-pink">${esc(chBadge)}</span>
           <h2 class="font-display font-bold text-lg">${esc(CHAPTERS[ch] || '')}</h2>
           <span class="rule"></span>
         </div>
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           ${list.filter((m) => m.chapter === ch).map((m) => cardHTML(m, changed.has(m.id))).join('')}
         </div>
-      </section>`).join('');
+      </section>`;
+    }).join('');
   }
   renderSummary();
   refreshIcons();
@@ -1036,8 +1339,8 @@ function bindEvents() {
   $('#search').addEventListener('input', (e) => { state.query = e.target.value; renderList(); });
   $('#chapterFilter').addEventListener('change', (e) => { state.chapter = e.target.value; renderList(); });
 
-  $('#langToggle').addEventListener('click', () => {
-    state.lang = state.lang === 'fr' ? 'en' : 'fr';
+  $('#langSelect').addEventListener('change', (e) => {
+    state.lang = e.target.value;
     store.set(K_LANG, state.lang);
     applyLanguageUI();
     toast(t().toastLang);
