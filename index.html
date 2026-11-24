@@ -293,6 +293,18 @@ const LOCALES = {
   ko: 'ko-KR'
 };
 
+const TRANSLATE_CODES = {
+  fr: 'fr',
+  en: 'en',
+  es: 'es',
+  pt: 'pt',
+  de: 'de',
+  ru: 'ru',
+  zh: 'zh-CN',
+  ja: 'ja',
+  ko: 'ko'
+};
+
 const I18N = {
   fr: {
     pageTitle: 'Rate6 — Notez les missions de GTA VI',
@@ -328,6 +340,7 @@ const I18N = {
     toastSpoilerOn: 'Anti-spoiler activé',
     toastSpoilerOff: 'Anti-spoiler désactivé',
     toastLang: 'Langue : Français',
+    toastTranslating: 'Traduction des missions…',
     footer: 'Rate6 est un projet de fans indépendant, non affilié à Rockstar Games ni à Take-Two Interactive. Un vote par mission et par visiteur, sans compte requis.'
   },
   en: {
@@ -364,6 +377,7 @@ const I18N = {
     toastSpoilerOn: 'Anti-spoiler enabled',
     toastSpoilerOff: 'Anti-spoiler disabled',
     toastLang: 'Language: English',
+    toastTranslating: 'Translating missions…',
     footer: 'Rate6 is an independent fan project, not affiliated with Rockstar Games or Take-Two Interactive. One vote per mission and per visitor, no account required.'
   },
   es: {
@@ -400,6 +414,7 @@ const I18N = {
     toastSpoilerOn: 'Antispoiler activado',
     toastSpoilerOff: 'Antispoiler desactivado',
     toastLang: 'Idioma: Español',
+    toastTranslating: 'Traduciendo misiones…',
     footer: 'Rate6 es un proyecto independiente de fans, no afiliado a Rockstar Games ni a Take-Two Interactive. Un voto por misión y por visitante, sin necesidad de cuenta.'
   },
   pt: {
@@ -436,6 +451,7 @@ const I18N = {
     toastSpoilerOn: 'Anti-spoiler ativado',
     toastSpoilerOff: 'Anti-spoiler desativado',
     toastLang: 'Idioma: Português',
+    toastTranslating: 'Traduzindo missões…',
     footer: 'Rate6 é um projeto independente de fãs, não afiliado à Rockstar Games nem à Take-Two Interactive. Um voto por missão e por visitante, sem necessidade de conta.'
   },
   de: {
@@ -472,6 +488,7 @@ const I18N = {
     toastSpoilerOn: 'Anti-Spoiler aktiviert',
     toastSpoilerOff: 'Anti-Spoiler deaktiviert',
     toastLang: 'Sprache: Deutsch',
+    toastTranslating: 'Missionen werden übersetzt…',
     footer: 'Rate6 ist ein unabhängiges Fanprojekt und steht in keiner Verbindung zu Rockstar Games oder Take-Two Interactive. Eine Stimme pro Mission und Besucher, kein Konto erforderlich.'
   },
   ru: {
@@ -508,6 +525,7 @@ const I18N = {
     toastSpoilerOn: 'Антиспойлер включён',
     toastSpoilerOff: 'Антиспойлер выключен',
     toastLang: 'Язык: Русский',
+    toastTranslating: 'Перевод миссий…',
     footer: 'Rate6 — независимый фанатский проект, не связанный с Rockstar Games или Take-Two Interactive. Один голос за миссию от посетителя, регистрация не требуется.'
   },
   zh: {
@@ -544,6 +562,7 @@ const I18N = {
     toastSpoilerOn: '防剧透已开启',
     toastSpoilerOff: '防剧透已关闭',
     toastLang: '语言：简体中文',
+    toastTranslating: '正在翻译任务…',
     footer: 'Rate6 是一个独立的粉丝项目，与 Rockstar Games 或 Take-Two Interactive 无关。每位访客每个任务限投一票，无需注册账号。'
   },
   ja: {
@@ -580,6 +599,7 @@ const I18N = {
     toastSpoilerOn: 'ネタバレ防止を有効にしました',
     toastSpoilerOff: 'ネタバレ防止を解除しました',
     toastLang: '言語：日本語',
+    toastTranslating: 'ミッションを翻訳中…',
     footer: 'Rate6は非公式のファンプロジェクトであり、Rockstar GamesおよびTake-Two Interactiveとは一切関係ありません。アカウント不要で1ミッションにつき1人1票投票できます。'
   },
   ko: {
@@ -616,6 +636,7 @@ const I18N = {
     toastSpoilerOn: '스포일러 방지 켜짐',
     toastSpoilerOff: '스포일러 방지 꺼짐',
     toastLang: '언어: 한국어',
+    toastTranslating: '임무 번역 중…',
     footer: 'Rate6는 독립적인 팬 프로젝트이며 Rockstar Games 또는 Take-Two Interactive와 관련이 없습니다. 계정 없이 방문자당 임무별 1회 투표할 수 있습니다.'
   }
 };
@@ -753,6 +774,7 @@ const K_SPOILER = 'rate6_antispoiler';
 const K_REVEALED = 'rate6_revealed';
 const K_DEMO_VOTES = 'rate6_demo_votes';
 const K_LANG = 'rate6_lang';
+const K_TRANS_CACHE = 'rate6_trans_v1';
 
 function genId() {
   if (window.crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
@@ -809,6 +831,108 @@ const state = {
 const t = () => I18N[state.lang] || I18N.en;
 const fmt1 = (n) => Number(n).toLocaleString(LOCALES[state.lang] || 'en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const votesLabel = (n) => t().votes(n);
+
+/* ==========================================================================
+   TRADUCTION DYNAMIQUE DES CHAPITRES, TITRES & DESCRIPTIONS
+   ========================================================================== */
+const transCache = readJSON(K_TRANS_CACHE, {}) || {};
+const inFlightLangs = new Set();
+
+function getChapterTitle(ch) {
+  const orig = CHAPTERS[ch] || '';
+  if (state.lang === 'fr') return orig;
+  const entry = transCache[state.lang];
+  return (entry && entry.chapters && entry.chapters[ch]) || orig;
+}
+
+function getMissionTitle(m) {
+  if (state.lang === 'fr') return m.title;
+  const entry = transCache[state.lang];
+  return (entry && entry.titles && entry.titles[m.id]) || m.title;
+}
+
+function getMissionDesc(m) {
+  if (state.lang === 'fr') return m.description;
+  const entry = transCache[state.lang];
+  return (entry && entry.descs && entry.descs[m.id]) || m.description;
+}
+
+async function translateBatch(texts, targetLang) {
+  const tl = TRANSLATE_CODES[targetLang] || targetLang;
+  const joined = texts.join('\n');
+  const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=fr&tl=${encodeURIComponent(tl)}&dt=t&q=${encodeURIComponent(joined)}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  const full = (data[0] || []).map((part) => part[0] || '').join('');
+  const lines = full.split('\n');
+  return texts.map((orig, idx) => (lines[idx] && lines[idx].trim()) ? lines[idx].trim() : orig);
+}
+
+async function ensureContentTranslated(lang) {
+  if (lang === 'fr') return;
+  const existing = transCache[lang];
+  if (existing && existing.complete) return;
+  if (inFlightLangs.has(lang)) return;
+
+  inFlightLangs.add(lang);
+  toast(t().toastTranslating);
+
+  try {
+    const entry = transCache[lang] || { chapters: {}, titles: {}, descs: {}, complete: false };
+
+    // 1. Traduction des 5 titres de chapitres (depuis l'anglais d'origine)
+    const chIds = Object.keys(CHAPTERS);
+    const chTexts = chIds.map((c) => CHAPTERS[c]);
+    const chUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${encodeURIComponent(TRANSLATE_CODES[lang] || lang)}&dt=t&q=${encodeURIComponent(chTexts.join('\n'))}`;
+    const chRes = await fetch(chUrl);
+    if (chRes.ok) {
+      const chData = await chRes.json();
+      const chLines = (chData[0] || []).map((p) => p[0] || '').join('').split('\n');
+      chIds.forEach((c, i) => {
+        entry.chapters[c] = (chLines[i] && chLines[i].trim()) ? chLines[i].trim() : CHAPTERS[c];
+      });
+    }
+
+    // 2. Traduction des titres et descriptions des 91 missions par lots de 15
+    const BATCH_SIZE = 15;
+    for (let i = 0; i < MISSIONS.length; i += BATCH_SIZE) {
+      const slice = MISSIONS.slice(i, i + BATCH_SIZE);
+
+      // Titres (source anglaise pour préserver les jeux de mots officiels)
+      const titleUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${encodeURIComponent(TRANSLATE_CODES[lang] || lang)}&dt=t&q=${encodeURIComponent(slice.map((m) => m.title).join('\n'))}`;
+      const titleRes = await fetch(titleUrl);
+      if (titleRes.ok) {
+        const titleData = await titleRes.json();
+        const titleLines = (titleData[0] || []).map((p) => p[0] || '').join('').split('\n');
+        slice.forEach((m, idx) => {
+          entry.titles[m.id] = (titleLines[idx] && titleLines[idx].trim()) ? titleLines[idx].trim() : m.title;
+        });
+      }
+
+      // Descriptions (source française)
+      const translatedDescs = await translateBatch(slice.map((m) => m.description), lang);
+      slice.forEach((m, idx) => {
+        entry.descs[m.id] = translatedDescs[idx];
+      });
+
+      transCache[lang] = entry;
+      if (state.lang === lang) {
+        buildChapterSelect();
+        renderList();
+        if (state.currentId) openMission(state.currentId, true);
+      }
+    }
+
+    entry.complete = true;
+    transCache[lang] = entry;
+    store.set(K_TRANS_CACHE, JSON.stringify(transCache));
+  } catch (err) {
+    console.warn('Rate6 — translation fallback', err);
+  } finally {
+    inFlightLangs.delete(lang);
+  }
+}
 
 function ratingWord(v) {
   const w = t().words;
@@ -875,6 +999,7 @@ function applyLanguageUI() {
   buildChapterSelect();
   renderList();
   if (state.currentId) openMission(state.currentId, true);
+  ensureContentTranslated(state.lang);
 }
 
 function buildChapterSelect() {
@@ -883,9 +1008,10 @@ function buildChapterSelect() {
   $('#chapterFilter').innerHTML =
     `<option value="all">${esc(t().allChapters)}</option>` +
     chapters.map((c) => {
+      const chTitle = getChapterTitle(c);
       const label = state.lang === 'zh'
-        ? `第 ${c} 章 — ${CHAPTERS[c] || ''}`
-        : `${t().chapterWord} ${c} — ${CHAPTERS[c] || ''}`;
+        ? `第 ${c} 章 — ${chTitle}`
+        : `${t().chapterWord} ${c} — ${chTitle}`;
       return `<option value="${c}">${esc(label)}</option>`;
     }).join('');
   $('#chapterFilter').value = prev;
@@ -899,7 +1025,13 @@ function filtered() {
   return SORTED.filter((m) => {
     if (state.chapter !== 'all' && String(m.chapter) !== state.chapter) return false;
     if (!q) return true;
-    const hay = norm([m.title, m.description, m.protagonist, CHAPTERS[m.chapter] || '', 'chapitre ' + m.chapter, 'chapter ' + m.chapter].join(' '));
+    const hay = norm([
+      m.title, getMissionTitle(m),
+      m.description, getMissionDesc(m),
+      m.protagonist,
+      CHAPTERS[m.chapter] || '', getChapterTitle(m.chapter),
+      'chapitre ' + m.chapter, 'chapter ' + m.chapter
+    ].join(' '));
     return hay.includes(q);
   });
 }
@@ -919,8 +1051,8 @@ function cardHTML(m, changed) {
     </div>
 
     <div class="${hidden ? 'spoiler' : ''}" ${hidden ? 'aria-hidden="true"' : ''}>
-      <h3 class="font-display font-bold text-[1.08rem] leading-snug tracking-tight">${esc(m.title)}</h3>
-      <p class="mt-1.5 text-sm text-muted line-clamp-2 leading-relaxed">${esc(m.description)}</p>
+      <h3 class="font-display font-bold text-[1.08rem] leading-snug tracking-tight">${esc(getMissionTitle(m))}</h3>
+      <p class="mt-1.5 text-sm text-muted line-clamp-2 leading-relaxed">${esc(getMissionDesc(m))}</p>
     </div>
     ${hidden ? `<div class="flex items-center gap-1.5 text-[11px] font-semibold text-neon-cyan"><i data-lucide="eye-off" class="w-3.5 h-3.5"></i> ${esc(L.spoilerCard)}</div>` : ''}
 
@@ -978,7 +1110,7 @@ function renderList() {
       <section class="mb-10">
         <div class="flex items-baseline gap-3 mb-4">
           <span class="font-display font-bold text-xs tracking-[.22em] text-neon-pink">${esc(chBadge)}</span>
-          <h2 class="font-display font-bold text-lg">${esc(CHAPTERS[ch] || '')}</h2>
+          <h2 class="font-display font-bold text-lg">${esc(getChapterTitle(ch))}</h2>
           <span class="rule"></span>
         </div>
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -1014,8 +1146,8 @@ function openMission(id, keepScroll = false) {
         <div class="flex flex-wrap items-center gap-2 mb-3">
           <span class="chip font-display">CH.${m.chapter} · ${L.noWord} ${pad2(m.order)}</span>
         </div>
-        <p class="text-[11px] uppercase tracking-[.2em] text-neon-cyan font-semibold">${esc(CHAPTERS[m.chapter] || L.chapterWord + ' ' + m.chapter)}</p>
-        <h2 id="modalTitle" class="font-display font-extrabold text-2xl leading-tight mt-1">${esc(m.title)}</h2>
+        <p class="text-[11px] uppercase tracking-[.2em] text-neon-cyan font-semibold">${esc(getChapterTitle(m.chapter) || L.chapterWord + ' ' + m.chapter)}</p>
+        <h2 id="modalTitle" class="font-display font-extrabold text-2xl leading-tight mt-1">${esc(getMissionTitle(m))}</h2>
       </div>
       <button id="modalClose" type="button" aria-label="Close"
               class="shrink-0 w-9 h-9 grid place-items-center rounded-xl border border-line hover:border-neon-pink/60 transition">
@@ -1028,7 +1160,7 @@ function openMission(id, keepScroll = false) {
       <span class="tag tag-${tagKey(m.protagonist)}">${esc(m.protagonist)}</span>
     </div>
 
-    <p class="mt-4 text-[15px] leading-relaxed text-[#C9C9D6]">${esc(m.description)}</p>
+    <p class="mt-4 text-[15px] leading-relaxed text-[#C9C9D6]">${esc(getMissionDesc(m))}</p>
 
     <div class="mt-6 grid grid-cols-2 gap-3">
       <div class="box">
